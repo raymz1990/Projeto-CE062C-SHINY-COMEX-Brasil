@@ -1,0 +1,12 @@
+name: CE302-COMEX-Brasil
+title: CE302-COMEX-BRASIL
+username: raymz
+account: raymz
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12250971
+bundleId:
+url: https://raymz.shinyapps.io/CE302-COMEX-Brasil/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
