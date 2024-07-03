@@ -3,6 +3,7 @@ library(bs4Dash)
 library(leaflet)
 library(plotly)
 library(DT)
+library(networkD3)
 
 ui <- dashboardPage(
   header = dashboardHeader(
@@ -26,31 +27,31 @@ ui <- dashboardPage(
                menuSubItem(
                  text = "Região Norte",
                  tabName = "norte",
-                 icon = icon("circle")
+                 icon = icon("globe")
                ),
                menuSubItem(
                  text = "Região Nordeste",
                  tabName = "nordeste",
-                 icon = icon("circle")
+                 icon = icon("globe")
                ),
                menuSubItem(
                  text = "Região Centro-Oeste",
                  tabName = "centro-oeste",
-                 icon = icon("circle")
+                 icon = icon("globe")
                ),
                menuSubItem(
                  text = "Região Sudeste",
                  tabName = "sudeste",
-                 icon = icon("circle")
+                 icon = icon("globe")
                ),
                menuSubItem(
                  text = "Região Sul",
                  tabName = "sul",
-                 icon = icon("circle")
+                 icon = icon("globe")
                )
       ),
-      menuItem("Produtos", tabName = "PRODUCTS",
-               icon = icon("shopping-cart")),
+      # menuItem("Produtos", tabName = "PRODUCTS",
+      #          icon = icon("shopping-cart")),
       menuItem("Base de Dados", tabName = "DATABASE",
                icon = icon("database"))
     )
@@ -141,270 +142,239 @@ ui <- dashboardPage(
             )
           )
         ), 
-        fluidRow(
-          box(
-            title = "Mapa de Exportações",
-            width = 12,
-            leafletOutput("map", height = 800)  # Saída do mapa
-          )
-        )
+       fluidRow(
+         box(
+           title = "Mapa de Exportações",
+           width = 12,
+           leafletOutput("map", height = 800)  # Saída do mapa
+         )
+       )
       ),
         
       
       
-      
-      tabItems(
-        tabItem(
-          tabName = "REGION"
-        ),
-        tabItem(
-          tabName = "norte",
-          h2("Região Norte"),
-          fluidRow(
-            column(
-              width = 4,
-              selectInput("product_select", "Selecionar Produto:",
-                          choices = c("Todos", unique(region_data$Produto)),
-                          selected = "Todos")
-            ),
-            column(
-              width = 4,
-              sliderInput("year_select", "Selecionar Ano:", 
-                          min = min(region_data$Ano),
-                          max = max(region_data$Ano),
-                          value = max(region_data$Ano),
-                          step = 1)
-            ),
-            column(
-              width = 4,
-              radioButtons(
-                "measure_select",
-                "Medida:",
-                choices = list("Valor ($)" = "value", "Peso (Toneladas)" = "weight"),
-                selected = "value",
-                inline = TRUE
-              )
+      tabItem(
+        tabName = "norte",
+        h2("Exportações da Região Norte"),
+        fluidRow(
+          column(
+            width = 8,
+            selectInput(
+              inputId = "product_select_norte",
+              label = "Selecionar Produto:",
+              choices = c("Todos", unique(region_data_norte$Produto), decreasing = TRUE),
+              selected = "Todos",
+              multiple = TRUE
             )
           ),
-          fluidRow(
-            box(
-              title = "Gráfico Sankey",
-              width = 12,
-              sankeyNetworkOutput("sankey_plot")
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Top 3 Países Exportadores",
-              width = 12,
-              dataTableOutput("top_countries_table")
-            )
-          ),
-          fluidRow(
-            column(
-              width = 12,
-              tabBox(
-                id = "norte_tabs",
-                tabPanel("Gráfico Sankey", sankeyNetworkOutput("sankey_plot_norte")),
-                tabPanel("Top 3 Países", dataTableOutput("top_countries_table_norte"))
-              )
-            )
-          )
-        ),,
-        tabItem(
-          tabName = "nordeste",
-          h2("Região Nordeste"),
-          fluidRow(
-            column(
-              width = 4,
-              selectInput("product_select_nordeste", "Selecionar Produto:",
-                          choices = c("Todos", unique(region_data$Produto)),
-                          selected = "Todos")
-            ),
-            column(
-              width = 4,
-              sliderInput("year_select_nordeste", "Selecionar Ano:", 
-                          min = min(region_data$Ano),
-                          max = max(region_data$Ano),
-                          value = max(region_data$Ano),
-                          step = 1)
-            ),
-            column(
-              width = 4,
-              radioButtons(
-                "measure_select_nordeste",
-                "Medida:",
-                choices = list("Valor ($)" = "value", "Peso (Toneladas)" = "weight"),
-                selected = "value",
-                inline = TRUE
-              )
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Gráfico Sankey",
-              width = 12,
-              sankeyNetworkOutput("sankey_plot_nordeste")
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Top 3 Países Exportadores",
-              width = 12,
-              dataTableOutput("top_countries_table_nordeste")
+          column(
+            width = 4,
+            selectInput(
+              inputId = "year_select_norte",
+              label = "Selecionar Ano:", 
+              choices = unique(region_data_norte$Ano),
+              selected = max(region_data_norte$Ano)
             )
           )
         ),
-        tabItem(
-          tabName = "centro_oeste",
-          h2("Região Centro-Oeste"),
-          fluidRow(
-            column(
-              width = 4,
-              selectInput("product_select_centro_oeste", "Selecionar Produto:",
-                          choices = c("Todos", unique(region_data$Produto)),
-                          selected = "Todos")
-            ),
-            column(
-              width = 4,
-              sliderInput("year_select_centro_oeste", "Selecionar Ano:", 
-                          min = min(region_data$Ano),
-                          max = max(region_data$Ano),
-                          value = max(region_data$Ano),
-                          step = 1)
-            ),
-            column(
-              width = 4,
-              radioButtons(
-                "measure_select_centro_oeste",
-                "Medida:",
-                choices = list("Valor ($)" = "value", "Peso (Toneladas)" = "weight"),
-                selected = "value",
-                inline = TRUE
-              )
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Gráfico Sankey",
-              width = 12,
-              sankeyNetworkOutput("sankey_plot_centro_oeste")
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Top 3 Países Exportadores",
-              width = 12,
-              dataTableOutput("top_countries_table_centro_oeste")
-            )
-          )
-        ),
-        tabItem(
-          tabName = "sudeste",
-          h2("Região Sudeste"),
-          fluidRow(
-            column(
-              width = 4,
-              selectInput("product_select_sudeste", "Selecionar Produto:",
-                          choices = c("Todos", unique(region_data$Produto)),
-                          selected = "Todos")
-            ),
-            column(
-              width = 4,
-              sliderInput("year_select_sudeste", "Selecionar Ano:", 
-                          min = min(region_data$Ano),
-                          max = max(region_data$Ano),
-                          value = max(region_data$Ano),
-                          step = 1)
-            ),
-            column(
-              width = 4,
-              radioButtons(
-                "measure_select_sudeste",
-                "Medida:",
-                choices = list("Valor ($)" = "value", "Peso (Toneladas)" = "weight"),
-                selected = "value",
-                inline = TRUE
-              )
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Gráfico Sankey",
-              width = 12,
-              sankeyNetworkOutput("sankey_plot_sudeste")
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Top 3 Países Exportadores",
-              width = 12,
-              dataTableOutput("top_countries_table_sudeste")
-            )
-          )
-        ),
-        tabItem(
-          tabName = "sul",
-          h2("Região Sul"),
-          fluidRow(
-            column(
-              width = 4,
-              selectInput("product_select_sul", "Selecionar Produto:",
-                          choices = c("Todos", unique(region_data$Produto)),
-                          selected = "Todos")
-            ),
-            column(
-              width = 4,
-              sliderInput("year_select_sul", "Selecionar Ano:", 
-                          min = min(region_data$Ano),
-                          max = max(region_data$Ano),
-                          value = max(region_data$Ano),
-                          step = 1)
-            ),
-            column(
-              width = 4,
-              radioButtons(
-                "measure_select_sul",
-                "Medida:",
-                choices = list("Valor ($)" = "value", "Peso (Toneladas)" = "weight"),
-                selected = "value",
-                inline = TRUE
-              )
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Gráfico Sankey",
-              width = 12,
-              sankeyNetworkOutput("sankey_plot_sul")
-            )
-          ),
-          fluidRow(
-            box(
-              title = "Top 3 Países Exportadores",
-              width = 12,
-              dataTableOutput("top_countries_table_sul")
-            )
-          )
-        ),
-        tabItem(
-          tabName = "PRODUCTS",
-          h2("Produtos"),
+        fluidRow(
           box(
-            title = "Box 3",
-            "Content 3"
+            title = "Destinos das Exportações",
+            width = 12,
+            sankeyNetworkOutput("sankey_plot_norte")
           )
         ),
+        fluidRow(
+          box(
+            title = "Top 5 Países Exportadores",
+            width = 12,
+            dataTableOutput("top_countries_table_norte")
+          )
+        )
+      ),
+      
+      tabItem(
+        tabName = "nordeste",
+        h2("Exportações da Região Nordeste"),
+        fluidRow(
+          column(
+            width = 8,
+            selectInput(
+              inputId = "product_select_nordeste",
+              label = "Selecionar Produto:",
+              choices = c("Todos", unique(region_data_nordeste$Produto), decreasing = TRUE),
+              selected = "Todos",
+              multiple = TRUE
+            )
+          ),
+          column(
+            width = 4,
+            selectInput(
+              inputId = "year_select_nordeste",
+              label = "Selecionar Ano:", 
+              choices = unique(region_data_nordeste$Ano),
+              selected = max(region_data_nordeste$Ano)
+            )
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Destinos das Exportações",
+            width = 12,
+            sankeyNetworkOutput("sankey_plot_nordeste")
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Top 5 Países Exportadores",
+            width = 12,
+            dataTableOutput("top_countries_table_nordeste")
+          )
+        )
+      ),
+      
+      tabItem(
+        tabName = "centro",
+        h2("Exportações da Região Centro Oeste"),
+        fluidRow(
+          column(
+            width = 8,
+            selectInput(
+              inputId = "product_select_centro",
+              label = "Selecionar Produto:",
+              choices = c("Todos", unique(region_data_centro$Produto), decreasing = TRUE),
+              selected = "Todos",
+              multiple = TRUE
+            )
+          ),
+          column(
+            width = 4,
+            selectInput(
+              inputId = "year_select_centro",
+              label = "Selecionar Ano:", 
+              choices = unique(region_data_centro$Ano),
+              selected = max(region_data_centro$Ano)
+            )
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Destinos das Exportações",
+            width = 12,
+            sankeyNetworkOutput("sankey_plot_centro")
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Top 5 Países Exportadores",
+            width = 12,
+            dataTableOutput("top_countries_table_centro")
+          )
+        )
+      ),
+      
+      tabItem(
+        tabName = "sudeste",
+        h2("Exportações da Região Sudeste"),
+        fluidRow(
+          column(
+            width = 8,
+            selectInput(
+              inputId = "product_select_sudeste",
+              label = "Selecionar Produto:",
+              choices = c("Todos", unique(region_data_sudeste$Produto), decreasing = TRUE),
+              selected = "Todos",
+              multiple = TRUE
+            )
+          ),
+          column(
+            width = 4,
+            selectInput(
+              inputId = "year_select_sudeste",
+              label = "Selecionar Ano:", 
+              choices = unique(region_data_sudeste$Ano),
+              selected = max(region_data_sudeste$Ano)
+            )
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Destinos das Exportações",
+            width = 12,
+            sankeyNetworkOutput("sankey_plot_sudeste")
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Top 5 Países Exportadores",
+            width = 12,
+            dataTableOutput("top_countries_table_sudeste")
+          )
+        )
+      ),
+      
+      tabItem(
+        tabName = "sul",
+        h2("Exportações da Região Sul"),
+        fluidRow(
+          column(
+            width = 8,
+            selectInput(
+              inputId = "product_select_sul",
+              label = "Selecionar Produto:",
+              choices = c("Todos", unique(region_data_sul$Produto), decreasing = TRUE),
+              selected = "Todos",
+              multiple = TRUE
+            )
+          ),
+          column(
+            width = 4,
+            selectInput(
+              inputId = "year_select_sul",
+              label = "Selecionar Ano:", 
+              choices = unique(region_data_sul$Ano),
+              selected = max(region_data_sul$Ano)
+            )
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Destinos das Exportações",
+            width = 12,
+            sankeyNetworkOutput("sankey_plot_sul")
+          )
+        ),
+        fluidRow(
+          box(
+            title = "Top 5 Países Exportadores",
+            width = 12,
+            dataTableOutput("top_countries_table_sul")
+          )
+        )
+      ),
+        # tabItem(
+        #   tabName = "PRODUCTS",
+        #   h2("Produtos"),
+        #   box(
+        #     title = "Box 3",
+        #     "Content 3"
+        #   )
+        # ),
         tabItem(
           tabName = "DATABASE",
-          box(
-            width = 12,
-            dataTableOutput("datatable")
+          fluidRow(
+            box(
+              width = 12,
+              title = "Base de Dados Exportações Brasil - 2011 - 2020",
+              status = "info", solidHeader = TRUE,
+              DT::dataTableOutput("datatable")
+            )
           )
         )
       )
     )
-  )
 )
+  
+
 
 shinyUI(ui)

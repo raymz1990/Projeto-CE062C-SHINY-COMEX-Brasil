@@ -5,6 +5,7 @@ library(tidyverse)
 library(sf)
 library(leaflet)
 library(stringr)
+library(networkD3)
 
 #---------------------------------------------------------------------
 # Tabelas
@@ -208,66 +209,24 @@ region_data <- region_data %>%
             Total_Peso = sum(`Peso.Líquido`, na.rm = TRUE), 
             .groups = 'drop')
 
-# Função auxiliar para filtrar dados por região
-filter_region_data <- function(region) {
-  region_data %>%
-    filter(Região == region)
-}
+# Região norte
+region_data_norte <- region_data |>
+  filter(Região == "Norte")
 
-# Gráfico Sankey
-render_sankey <- function(region) {
-  output[[paste0("sankey_plot_", region)]] <- renderSankeyNetwork({
-    req(input[[paste0("year_select_", region)]])
-    req(input[[paste0("product_select_", region)]])
-    
-    filtered_data <- filter_region_data(region) %>%
-      filter(Ano == input[[paste0("year_select_", region)]], Produto %in% input[[paste0("product_select_", region)]] | input[[paste0("product_select_", region)]] == "Todos")
-    
-    nodes <- data.frame(
-      name = unique(c(filtered_data$Estado, filtered_data$País))
-    )
-    
-    links <- filtered_data %>%
-      group_by(Estado, País) %>%
-      summarise(value = sum(Total_Valor, na.rm = TRUE)) %>%
-      left_join(nodes, by = c("Estado" = "name")) %>%
-      rename(source = id) %>%
-      left_join(nodes, by = c("País" = "name")) %>%
-      rename(target = id)
-    
-    sankeyNetwork(
-      Links = links, Nodes = nodes,
-      Source = "source", Target = "target",
-      Value = "value", NodeID = "name",
-      sinksRight = FALSE
-    )
-  })
-}
+# Região norte
+region_data_nordeste <- region_data |>
+  filter(Região == "Nordeste")
 
-# Tabela de top países exportadores
-render_table <- function(region) {
-  output[[paste0("top_countries_table_", region)]] <- renderDataTable({
-    req(input[[paste0("year_select_", region)]])
-    
-    filtered_data <- filter_region_data(region) %>%
-      filter(Ano == input[[paste0("year_select_", region)]])
-    
-    top_countries <- filtered_data %>%
-      group_by(Estado, País) %>%
-      summarise(Total_Valor = sum(Total_Valor, na.rm = TRUE)) %>%
-      arrange(desc(Total_Valor)) %>%
-      group_by(Estado) %>%
-      slice_max(Total_Valor, n = 3) %>%
-      ungroup()
-    
-    datatable(top_countries, options = list(pageLength = 10, autoWidth = TRUE))
-  })
-}
+# Região norte
+region_data_centro <- region_data |>
+  filter(Região == "Centro Oeste")
 
-# Renderizar gráficos e tabelas para cada região
-regions <- c("norte", "nordeste", "centro_oeste", "sudeste", "sul")
+# Região norte
+region_data_sudeste <- region_data |>
+  filter(Região == "Sudeste")
 
-lapply(regions, function(region) {
-  render_sankey(region)
-  render_table(region)
-})
+# Região norte
+region_data_sul <- region_data |>
+  filter(Região == "Sul")
+
+
