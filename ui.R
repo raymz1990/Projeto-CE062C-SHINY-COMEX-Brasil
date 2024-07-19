@@ -73,7 +73,7 @@ ui <- dashboardPage(
     tabItems(
       tabItem(
         tabName = "OVERVIEW",
-        h2("Comércio Internacional Brasileiro: Uma Análise das Exportações de 2011 à 2020"),
+        h2("Comércio Internacional Brasileiro: Exportações de 2011 à 2020"),
         fluidRow(
           valueBox(
             subtitle = "Exportações (em $)",
@@ -188,7 +188,7 @@ ui <- dashboardPage(
           box(
             title = "Top 5 Países Exportadores",
             width = 12,
-            dataTableOutput("top_countries_table_norte")
+            DT::dataTableOutput("top_countries_table_norte")
           )
         )
       ),
@@ -228,7 +228,7 @@ ui <- dashboardPage(
           box(
             title = "Top 5 Países Exportadores",
             width = 12,
-            dataTableOutput("top_countries_table_nordeste")
+            DT::dataTableOutput("top_countries_table_nordeste")
           )
         )
       ),
@@ -268,7 +268,7 @@ ui <- dashboardPage(
           box(
             title = "Top 5 Países Exportadores",
             width = 12,
-            dataTableOutput("top_countries_table_centro")
+            DT::dataTableOutput("top_countries_table_centro")
           )
         )
       ),
@@ -308,7 +308,7 @@ ui <- dashboardPage(
           box(
             title = "Top 5 Países Exportadores",
             width = 12,
-            dataTableOutput("top_countries_table_sudeste")
+            DT::dataTableOutput("top_countries_table_sudeste")
           )
         )
       ),
@@ -348,7 +348,7 @@ ui <- dashboardPage(
           box(
             title = "Top 5 Países Exportadores",
             width = 12,
-            dataTableOutput("top_countries_table_sul")
+            DT::dataTableOutput("top_countries_table_sul")
           )
         )
       ),

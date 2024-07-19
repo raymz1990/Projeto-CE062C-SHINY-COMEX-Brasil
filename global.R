@@ -8,7 +8,7 @@ library(stringr)
 library(networkD3)
 
 #---------------------------------------------------------------------
-# Tabelas
+# Carregando arquivos
 
 # dados <- read.csv('./data/dados.csv')
 # tb_city <- read.csv('./data/tb_city.csv')
@@ -16,45 +16,41 @@ library(networkD3)
 # tb_products <- read.csv('./data/tb_products.csv')
 # database <- read.csv('./data/database.csv')
 
-temp_dir <- tempdir()                         # Cria um diretório temporário
-unzip("./data/data.zip", exdir = temp_dir)
+# carregando arquivos .rds (foram convertidos neste formato para comprimir 
+# o tamanho)
+# dados       <- readRDS('./files/dados.rds')
+tb_city     <- readRDS('./files/tb_city.rds')
+tb_country  <- readRDS('./files/tb_country.rds')
+# tb_products <- readRDS('./files/tb_products.rds')
+database    <- readRDS('./files/database.rds')
 
-# Listar arquivos extraídos (opcional, para verificação)
-arquivos_extraidos <- list.files(temp_dir, full.names = TRUE)
-
-# Exemplo de leitura de um arquivo .csv extraído
-dados       <- read.csv(file.path(temp_dir, "dados.csv"))
-tb_city     <- read.csv(file.path(temp_dir, "tb_city.csv"))
-tb_country  <- read.csv(file.path(temp_dir, "tb_country.csv"))
-tb_products <- read.csv(file.path(temp_dir, "tb_products.csv"))
-database    <- read.csv(file.path(temp_dir, "database.csv"))
-
-# Limpar diretório temporário após o uso (opcional, dependendo da necessidade)
-unlink(temp_dir, recursive = TRUE)
+# Remova duplicatas na coluna NO_PAIS_ING
+# tb_country <- tb_country %>%
+#   distinct(NO_PAIS_ING, .keep_all = TRUE)
 
 #---------------------------------------------------------------------
 # Funções Overview
 
 # Valor das exportações
 kpi_export_value <- function(tbl) {
-  tbl$US_Valor |> sum(na.rm = TRUE)
+  tbl$Valor |> sum(na.rm = TRUE)
 }
  
-kpi_export_value(dados)
+kpi_export_value(database)
 
 # Toneladas exportadas
 kpi_export_weight <- function(tbl) {
-  tbl$Peso_Liquido |> sum(na.rm = TRUE) / 1000
+  tbl$`Peso Líquido` |> sum(na.rm = TRUE) / 1000
 }
 
-kpi_export_weight(dados)
+kpi_export_weight(database)
 
 # kg exportados
 kpi_export_weight_kg <- function(tbl) {
-  tbl$Peso_Liquido |> sum(na.rm = TRUE)
+  tbl$`Peso Líquido` |> sum(na.rm = TRUE)
 }
 
-kpi_export_weight_kg(dados)
+kpi_export_weight_kg(database)
 
 # Preço médio dos produtos
 # kpi_average_price <- function(tbl) {
@@ -63,30 +59,35 @@ kpi_export_weight_kg(dados)
 # 
 # kpi_average_price(dados)  
 
+database <- database %>%
+  mutate(Ano = as.numeric(substr(
+    `Trimestre/Ano`, nchar(`Trimestre/Ano`) - 3, nchar(`Trimestre/Ano`)
+  )))
+
 # Faturamento último ano
 kpi_export_value_last_year <- function(tbl, year = 1) {
   tbl |>
-    filter(Year >= max(Year) - year) |>
+    filter(Ano >= max(Ano) - year) |>
     kpi_export_value()
 }
 
-kpi_export_value_last_year(dados)
+kpi_export_value_last_year(database)
 
 # Exportação último ano
 kpi_export_weight_last_year <- function(tbl, year = 1) {
   tbl |>
-    filter(Year >= max(Year) - year) |>
+    filter(Ano >= max(Ano) - year) |>
     kpi_export_weight()
 }
 
-kpi_export_weight_last_year(dados)
+kpi_export_weight_last_year(database)
 
 # Calcular o crescimento anual das exportações
 growth_rate <- function(tbl) {
   tbl %>%
-    group_by(Year) %>%
-    summarise(Total_Export_Value = sum(US_Valor, na.rm = TRUE)) %>%
-    arrange(Year) %>%
+    group_by(Ano) %>%
+    summarise(Total_Export_Value = sum(Valor, na.rm = TRUE)) %>%
+    arrange(Ano) %>%
     mutate(Growth_Rate = (Total_Export_Value - lag(Total_Export_Value)) / lag(Total_Export_Value) * 100) %>%
     filter(!is.na(Growth_Rate)) %>%
     tail(1) %>%
@@ -95,16 +96,16 @@ growth_rate <- function(tbl) {
 
 growth_rate2 <- function(tbl) {
   tbl %>%
-    group_by(Year) %>%
-    summarise(Total_Export_Weight = sum(Peso_Liquido, na.rm = TRUE)) %>%
-    arrange(Year) %>%
+    group_by(Ano) %>%
+    summarise(Total_Export_Weight = sum(`Peso Líquido`, na.rm = TRUE)) %>%
+    arrange(Ano) %>%
     mutate(Growth_Rate2 = (Total_Export_Weight - lag(Total_Export_Weight)) / lag(Total_Export_Weight) * 100) %>%
     filter(!is.na(Growth_Rate2)) %>%
     tail(1) %>%
     pull(Growth_Rate2)
 }
 
-growth_rate2(dados)
+growth_rate2(database)
 
 # Função para formatar valores
 format_value <- function(value) {
@@ -123,24 +124,20 @@ format_value <- function(value) {
 
 #------------------------------------------------------------------------------
 
-# Preparar dados de exportação por região
-dados_regioes <- dados %>%
-  left_join(tb_city, by = "City") %>%
-  group_by(NO_REGIAO, Year) %>%
+# Preparar database de exportação por região
+data_regioes <- database %>%
+  group_by(Região, Ano) %>%
   summarise(
-    Total_Export_Value = sum(US_Valor, na.rm = TRUE) / 1e6, # converter para milhões
-    Total_Export_Weight = sum(Peso_Liquido, na.rm = TRUE) / 1000
-  ) %>%
-  mutate(NO_REGIAO = str_replace_all(NO_REGIAO, "REGIAO ", "")) %>%
-  mutate(NO_REGIAO = str_to_title(NO_REGIAO))
+    Total_Export_Value = sum(Valor, na.rm = TRUE) / 1e6, # converter para milhões
+    Total_Export_Weight = sum(`Peso Líquido`, na.rm = TRUE) / 1000
+  )
 
-# Preparar dados de exportação por bloco econômico
-dados_blocos <- dados %>%
-  left_join(tb_country, by = c("Country" = "NO_PAIS_ING")) %>%
-  group_by(NO_BLOCO, Year) %>%
+# Preparar database de exportação por bloco econômico
+data_blocos <- database %>%
+  group_by(`Região Geográfica`, Ano) %>%
   summarise(
-    Total_Export_Value = sum(US_Valor, na.rm = TRUE) / 1e6, # converter para milhões
-    Total_Export_Weight = sum(Peso_Liquido, na.rm = TRUE) / 1000
+    Total_Export_Value = sum(Valor, na.rm = TRUE) / 1e6, # converter para milhões
+    Total_Export_Weight = sum(`Peso Líquido`, na.rm = TRUE) / 1000
   )
 
 #---------------------------------------------------------------------
@@ -154,34 +151,45 @@ world_sf <- select(world_sf, ISO3, UN, NAME, LON, LAT, geometry)
 # Carregar shapefile dos estados do Brasil
 brasil_shapefile <- read_sf("./maps/br_uf_shape_file/BR_UF_2022.shp")
 
-# Unir dados de exportação com tb_country para obter informações dos países
-dados_paises <- dados %>%
-  group_by(Country) %>%
-  summarise(Total_Export_Value = sum(US_Valor, na.rm = TRUE))
+# Unir database de exportação com tb_country para obter informações dos países
+data_paises <- database %>%
+  group_by(País) %>%
+  summarise(Total_Export_Value = sum(Valor, na.rm = TRUE))
 
-dados_paises <- dados_paises %>%
-  left_join(tb_country, by = c("Country" = "NO_PAIS_ING"))
+data_paises <- data_paises %>%
+  left_join(tb_country, by = c("País" = "NO_PAIS"))
 
 
-# Unir dados de exportação com shapefile dos países do mundo
-dados_paises <- select(dados_paises, "Country", "CO_PAIS_ISON3", "CO_PAIS_ISOA3","Total_Export_Value", 
-         "NO_BLOCO", "NO_PAIS")
+
+
+# Unir database de exportação com shapefile dos países do mundo
+data_paises <- select(data_paises, "País", "CO_PAIS_ISON3", "CO_PAIS_ISOA3","Total_Export_Value", 
+         "NO_BLOCO")
 
 world_sf <- world_sf %>%
-  left_join(dados_paises, by = c("ISO3" = "CO_PAIS_ISOA3"))
+  left_join(data_paises, by = c("ISO3" = "CO_PAIS_ISOA3"))
 
-# Separar dados do Brasil dos dados do resto do mundo
+# Separar database do Brasil dos database do resto do mundo
 world_sf <- world_sf %>% filter(ISO3 != "BRA")
 
-# Preparar dados de exportação por estado
-dados_estados <- dados %>%
-  left_join(tb_city, by = "City") %>%
-  group_by(SG_UF) %>%
-  summarise(Total_Export_Value = sum(US_Valor, na.rm = TRUE))
+# Preparar database de exportação por estado
+data_estados <- database %>%
+  group_by(Estado) %>%
+  summarise(Total_Export_Value = sum(Valor, na.rm = TRUE))
 
-# Unir dados de exportação com shapefile dos estados do Brasil
+data_estados <- data_estados %>%
+  left_join(tb_city, by = c("Estado" = "NO_UF"))
+
+# Unir database de exportação com shapefile dos estados do Brasil
+data_estados <- select(data_estados, "Estado", "SG_UF", "Total_Export_Value")
+
+data_estados <- data_estados |>
+  distinct()
+
 brasil_shapefile <- brasil_shapefile %>%
-  left_join(dados_estados, by = c("SIGLA_UF" = "SG_UF"))
+  left_join(data_estados, by = c("SIGLA_UF" = "SG_UF"))
+
+
 
 # Substituir valores faltantes por zero
 # world_sf$Total_Export_Value[is.na(world_sf$Total_Export_Value)] <- 0
@@ -195,18 +203,18 @@ pal_world <- colorNumeric("Oranges", domain = world_sf$Total_Export_Value, na.co
 pal_brazil <- colorNumeric("Greens", domain = brasil_shapefile$log_Total_Export_Value, na.color = "transparent")
 
 #------------------------------------------------------------------------
-# Preparar dados para scatter plot e tabela de top 3 países exportadores
-region_data <- select(database, "Mês.Ano", "Produto", "Estado", "Região", "País",
-                       "Região.Geográfica", "Valor....", "Peso.Líquido")
+# Preparar database para scatter plot e tabela de top 3 países exportadores
+region_data <- select(database, "Trimestre/Ano", "Produto", "Estado", "Região", "País",
+                       "Região Geográfica", "Valor", "Peso Líquido")
 
 region_data <- region_data %>%
-  mutate(Ano = as.numeric(sub(".* / ", "", Mês.Ano))) %>%
-  select(-Mês.Ano)
+  mutate(Ano = as.numeric(sub(".* / ", "", `Trimestre/Ano`))) %>%
+  select(-`Trimestre/Ano`)
 
 region_data <- region_data %>%
-  group_by(across(c(Produto, Estado, Região, País, Região.Geográfica, Ano))) %>%
-  summarise(Total_Valor = sum(`Valor....`, na.rm = TRUE),
-            Total_Peso = sum(`Peso.Líquido`, na.rm = TRUE), 
+  group_by(across(c(Produto, Estado, Região, País, `Região Geográfica`, Ano))) %>%
+  summarise(Total_Valor = sum(`Valor`, na.rm = TRUE),
+            Total_Peso = sum(`Peso Líquido`, na.rm = TRUE), 
             .groups = 'drop')
 
 # Região norte
@@ -230,3 +238,4 @@ region_data_sul <- region_data |>
   filter(Região == "Sul")
 
 
+  
